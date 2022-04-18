@@ -21,11 +21,11 @@ async fn main() {
         .init();
 
     let pool = PgPoolOptions::new()
-        .connect(&settings.database.connection_string().expose_secret())
-        .await
+        .connect_timeout(std::time::Duration::from_secs(2))
+        .connect_lazy(&settings.database.connection_string().expose_secret())
         .expect("Failed to connect Postgres");
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], settings.application_port));
+    let addr = SocketAddr::from((settings.application.host, settings.application.port));
     tracing::info!("The app is listening on {}", &addr);
 
     axum::Server::bind(&addr)
