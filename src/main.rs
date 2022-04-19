@@ -1,6 +1,5 @@
 use axum_zero2prod::configuration::Settings;
 use axum_zero2prod::startup::app;
-use secrecy::ExposeSecret;
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 
@@ -22,8 +21,7 @@ async fn main() {
 
     let pool = PgPoolOptions::new()
         .connect_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy(&settings.database.connection_string().expose_secret())
-        .expect("Failed to connect Postgres");
+        .connect_lazy_with(settings.database.with_db());
 
     let addr = SocketAddr::from((settings.application.host, settings.application.port));
     tracing::info!("The app is listening on {}", &addr);

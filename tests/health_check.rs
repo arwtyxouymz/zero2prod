@@ -6,7 +6,6 @@ use axum::{
 use axum_zero2prod::configuration::{DatabaseSettings, Settings};
 use axum_zero2prod::startup::app;
 use hyper;
-use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use tower::ServiceExt;
 
@@ -32,10 +31,9 @@ async fn health_check_works() {
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
     let configuration = Settings::new().expect("Failed to read configuration");
-    let connection_string = configuration.database.connection_string();
-
     let app = get_app().await;
-    let mut connection = PgConnection::connect(&connection_string.expose_secret())
+
+    let mut connection = PgConnection::connect_with(&configuration.database.with_db())
         .await
         .expect("Failed to connect to Postgres");
 
@@ -109,15 +107,15 @@ async fn get_app() -> Router {
 }
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
-    let mut connection =
-        PgConnection::connect(&config.connection_string_without_db().expose_secret())
-            .await
-            .expect("Failed to connect to Postgres");
+    let mut connection = PgConnection::connect_with(&config.without_db())
+        .await
+        .expect("Failed to connect to Postgres");
     connection
         .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
         .await
         .expect("Failed to create database");
-    let connection_pool = PgPool::connect(&config.connection_string().expose_secret())
+
+    let connection_pool = PgPool::connect_with(config.with_db())
         .await
         .expect("Failed to connect to Postgres.");
 
