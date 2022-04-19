@@ -35,4 +35,4 @@ COPY --from=builder /app/target/release/axum-zero2prod axum-zero2prod
 COPY configuration .
 ENV APP_ENVIRONMENT production
 
-ENTRYPOINT [ "axum-zero2prod" ]
+ENTRYPOINT [ "./axum-zero2prod" ]
